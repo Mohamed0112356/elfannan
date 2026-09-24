@@ -13,12 +13,82 @@ import time
 PROJECT_ROOT = Path("/kaggle/temp/ElFannan")
 ACE_ROOT = Path("/kaggle/temp/ACE-Step-1.5")
 CHECKPOINTS = PROJECT_ROOT / "models"
+
+# ACE-Step 1.5 currently ignores the documented ACESTEP_DTYPE environment
+# variable in its CUDA dtype-selection code. On T4 (pre-Ampere), the
+# upstream fallback is FP16, which can produce NaN latents during lyrics
+# generation. Patch that selector before importing acestep so the model is
+# actually loaded in FP32.
+ACESTEP_DTYPE = "float32"
+os.environ["ACESTEP_DTYPE"] = ACESTEP_DTYPE
+
+
+def patch_acestep_dtype() -> None:
+    orchestrator = (
+        ACE_ROOT
+        / "acestep"
+        / "core"
+        / "generation"
+        / "handler"
+        / "init_service_orchestrator.py"
+    )
+    if not orchestrator.exists():
+        raise FileNotFoundError(f"ACE-Step orchestrator not found: {orchestrator}")
+
+    source = orchestrator.read_text(encoding="utf-8")
+
+    # Make sure the orchestrator can read ACESTEP_DTYPE.
+    if "import os" not in source.split("\n", 30):
+        source = source.replace("import torch\n", "import os\nimport torch\n", 1)
+
+    old_block = '''        elif resolved_device == "cuda":
+            if gpu_config.cuda_supports_bfloat16():
+                self.dtype = torch.bfloat16
+            else:
+                self.dtype = torch.float16
+                logger.info(
+                    "[initialize_service] Pre-Ampere CUDA detected: using float16 instead of bfloat16."
+                )'''
+
+    new_block = '''        elif resolved_device == "cuda":
+            env_dtype = os.environ.get("ACESTEP_DTYPE", "").strip().lower()
+            if env_dtype in ("float32", "float16", "bfloat16"):
+                self.dtype = getattr(torch, env_dtype)
+                logger.info(
+                    f"[initialize_service] ACESTEP_DTYPE={env_dtype} override: "
+                    f"using dtype={self.dtype}."
+                )
+            elif gpu_config.cuda_supports_bfloat16():
+                self.dtype = torch.bfloat16
+            else:
+                self.dtype = torch.float16
+                logger.info(
+                    "[initialize_service] Pre-Ampere CUDA detected: using float16 instead of bfloat16."
+                )'''
+
+    if "ACESTEP_DTYPE={env_dtype} override" in source:
+        print("[OK] ACE-Step FP32 dtype override already present.")
+    elif old_block in source:
+        orchestrator.write_text(source.replace(old_block, new_block, 1), encoding="utf-8")
+        print("[OK] Patched ACE-Step CUDA dtype selector for ACESTEP_DTYPE.")
+    else:
+        raise RuntimeError(
+            "Could not patch ACE-Step dtype selector safely. "
+            "The upstream source layout has changed; refusing a blind edit."
+        )
+
+    verify = orchestrator.read_text(encoding="utf-8")
+    if 'env_dtype = os.environ.get("ACESTEP_DTYPE", "").strip().lower()' not in verify:
+        raise RuntimeError("FP32 patch verification failed.")
+
+patch_acestep_dtype()
+
 OUTPUT_DIR = Path("/kaggle/working/elfannan_output")
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 os.environ["ACESTEP_CHECKPOINTS_DIR"] = str(CHECKPOINTS)
-os.environ["ACESTEP_SAVE_MEMORY"] = "1"
+os.environ["ACESTEP_SAVE_MEMORY"] = "1"\nos.environ["ACESTEP_DTYPE"] = ACESTEP_DTYPE
 os.environ["ACESTEP_DISABLE_TQDM"] = "1"
 
 print("=" * 70)
