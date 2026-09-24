@@ -1,0 +1,16 @@
+gradio
+pydantic>=2
+python-dotenv
+PyYAML
+numpy
+scipy
+librosa
+soundfile
+ffmpeg-python
+requests
+rich
+typer
+huggingface_hub
+safetensors
+kaggle
+ipykernel

@@ -1,0 +1,5 @@
+project_name: ElFannan
+project_display_name: الفنان
+artist_root: artists
+input_root: data/input
+output_root: data/output

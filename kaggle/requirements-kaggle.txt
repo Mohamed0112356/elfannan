@@ -1,0 +1,7 @@
+huggingface_hub
+safetensors
+librosa
+soundfile
+ffmpeg-python
+rich
+requests

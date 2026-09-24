@@ -1,0 +1,40 @@
+{
+  "id": "artist_001",
+  "name": "",
+  "stage_name": "",
+  "tagline": "",
+  "language": "ar",
+  "genre": [],
+  "voice": {
+    "model": "",
+    "reference_audio": "",
+    "pitch_shift": 0
+  },
+  "personality": [],
+  "story": {
+    "origin": "",
+    "bio": "",
+    "timeline": []
+  },
+  "visual": {
+    "gender_presentation": "",
+    "age_style": "",
+    "appearance": "",
+    "fashion": "",
+    "palette": [],
+    "negative_prompt": ""
+  },
+  "music": {
+    "bpm_range": [
+      80,
+      120
+    ],
+    "keys": [],
+    "instrumentation": [],
+    "structure": "verse-prechorus-chorus-verse-chorus-bridge-chorus"
+  },
+  "rules": {
+    "must_keep": [],
+    "avoid": []
+  }
+}

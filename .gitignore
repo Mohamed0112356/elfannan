@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+.env
+
+# AI / model caches
+.cache/
+**/.cache/
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.bin
+*.index
+
+# Runtime data
+data/input/*
+data/stems/*
+data/voices/*
+data/lyrics/*
+data/music/*
+data/output/*
+!data/**/.gitkeep
+
+# Generated logs
+logs/*
+!logs/.gitkeep
+
+# OS / IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
