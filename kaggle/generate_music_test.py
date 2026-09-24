@@ -1,5 +1,10 @@
 from pathlib import Path
 import os
+
+# Kaggle/Jupyter sets MPLBACKEND to matplotlib_inline. ACE-Step runs as a
+# standalone process, so force a non-interactive backend before matplotlib
+# is imported by lightning/torchmetrics.
+os.environ["MPLBACKEND"] = "Agg"
 import shutil
 import json
 import time
